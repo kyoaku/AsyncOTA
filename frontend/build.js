@@ -17,10 +17,17 @@ function splitIntoChunks(buffer, chunkSize) {
 }
 
 (async function () {
-  // read the index.html file
-  const indexHtml = fs.readFileSync(inputPath, "utf8").toString();
+  // Step 1: Read and transform HTML
+  let indexHtml = fs.readFileSync(inputPath, "utf8").toString();
 
-  // Minify the HTML content
+  // Inline the SparkMD5 script dynamically
+  const sparkMD5Script = fs.readFileSync("./node_modules/spark-md5/spark-md5.min.js", "utf8");
+  indexHtml = indexHtml.replace(
+    /<!-- build:sparkmd5 -->\s*<script src="node_modules\/spark-md5\/spark-md5\.js"><\/script>/g,
+    `<script>${sparkMD5Script}</script>`
+  );
+
+  // Step 2: Minify the result
   const minifiedHtml = await htmlMinifier(indexHtml, {
     collapseWhitespace: true,
     removeComments: true,
@@ -40,9 +47,10 @@ function splitIntoChunks(buffer, chunkSize) {
 
   console.log(`[Minifier] Original: ${oldSize}KB | Minified: ${newSize}KB`);
 
-  // Gzip the minified HTML content
+  // Step 3: Gzip the result
   let gzippedHtml = zlib.gzipSync(minifiedHtml);
 
+  // Step 4: Write the result to the output file
   // Recreate the WebSerialHTML.h file with the new gzipped content
   // the content is stored as a byte array split into 64 byte chunks to avoid issues with the IDE
   let content = `#ifndef OTA_HTML_H
