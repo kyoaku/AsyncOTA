@@ -8,6 +8,7 @@
  */
 
 #include <AsyncOTA.h>
+#include <StreamString.h>
 
 AsyncOTAClass AsyncOTA;
 
